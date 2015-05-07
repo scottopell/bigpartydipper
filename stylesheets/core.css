@@ -1,3 +1,16 @@
-@import url("screen.css");
-@import url("non-screen.css") handheld;
-@import url("non-screen.css") only screen and (max-device-width:640px);
+body {
+  font-family: 'Montserrat', sans-serif;
+}
+.main {
+  display: table-cell;
+}
+
+.title {
+  font-size: 4em;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.bold {
+  font-weight: 2;
+}
