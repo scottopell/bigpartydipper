@@ -3,7 +3,7 @@
   <head>
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="viewport" content="width=640">
+    <meta name="viewport" content="width=device-width">
 
     <link rel="stylesheet" href="stylesheets/core.css" media="screen">
     <link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>
@@ -17,7 +17,15 @@
       <div class='title'>
         <span class='bold'>BigPartyDipper</span>.<span class='whoa'>party</span>
       </div>
+      <canvas id='canvas'></canvas>
     </div>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="js/blob.js"></script>
+    <script>
+    $(function(){
+      console.log("hello world");
+      everything();
+    });
+    </script>
   </body>
 </html>
