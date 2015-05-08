@@ -4,10 +4,12 @@ var everything = (function() {
   var ctx = canvas.getContext('2d');
 
   var absorb = .1;
-  var RESTI = .1;
+  var RESTI = .4;
   var TWOPI = Math.PI * 2;
   var realWidth = canvas.width;
   var realHeight = canvas.height;
+
+  var _useBlobColors = false;
 
   var members = [];
   function Vector(x, y) {
@@ -132,6 +134,10 @@ var everything = (function() {
     this.color = '#' + Math.floor(Math.random() * 16777215).toString(16);
     this.pos = new Vector(x, y);
     this.v = new Vector(0, 0);
+    this.bump = function(n){
+      this.v.y += Math.random() > 0.5 ? 1 : -1 * n;
+      this.v.x += Math.random() > 0.5 ? 1 : -1 * n;
+    };
     this.move = function(){
       for(var i = 0; i < members.length; i++){
         if (members[i].id !== this.id){
@@ -144,10 +150,6 @@ var everything = (function() {
           }
         }
       }
-
-      // TODO
-      this.v.y += 0;
-      this.v.x += 0;
 
       this.pos.x += this.v.x;
       this.pos.y += this.v.y;
@@ -179,11 +181,15 @@ var everything = (function() {
       ctx.beginPath();
       ctx.arc(this.pos.x, this.pos.y, this.size, 0, TWOPI, true);
       //ctx.fillStyle = this.color;
-      var MAX = 10;
-      var red = Math.floor(255 * Math.abs(this.v.y) / MAX);
-      //console.log(red);
-      var green = 255 - red;
-      ctx.fillStyle = 'rgb(' + red + "," + green + ',0)';
+      var color = this.color;
+      if (!_useBlobColors){
+        var MAX = 10;
+        var red = Math.floor(255 * Math.abs(this.v.y) / MAX);
+        //console.log(red);
+        var green = 255 - red;
+        color = 'rgb(' + red + "," + green + ',0)';
+      }
+      ctx.fillStyle = color;
       ctx.closePath();
       ctx.fill();
     };
@@ -242,16 +248,30 @@ var everything = (function() {
     // resize the canvas to fill browser window dynamically
 
     window.addEventListener('resize', resizeCanvas, false);
-    members.push(new Blob(Math.random() * realWidth, Math.random() * realHeight));
+    var blob = new Blob(Math.random() * realWidth, Math.random() * realHeight, Math.random() * 100000);
+    members.push(blob);
     resizeCanvas();
     registerEventListeners();
   }
 
   function registerEventListeners(){
     $('#canvas').on('mouseup', function(event){
-      console.log(event);
-      var blob = new Blob(event.offsetX, event.offsetY);
+      console.log('click / new blob created');
+      var blob = new Blob(event.offsetX, event.offsetY, Math.random() * 100000);
       members.push(blob);
+    });
+
+    $('.title .whoa').on('mouseup', function(){
+      console.log('toggle blob colors');
+      _useBlobColors = !_useBlobColors;
+    });
+
+    $('.title .bold').on('mouseup', function(){
+      console.log('bump');
+      members.forEach(function(member){
+        console.log(member);
+        member.bump(Math.random() * 3);
+      });
     });
   }
 
