@@ -247,12 +247,17 @@ var everything = (function() {
     }
   };
 
+  function generateId(){
+    return "" + Math.floor(Math.random() * 1000000000);
+  }
+
   function init(){
     console.log("helllllo");
     // resize the canvas to fill browser window dynamically
 
     window.addEventListener('resize', resizeCanvas, false);
-    var blob = new Blob(Math.random() * realWidth, Math.random() * realHeight, Math.random() * 100000);
+    var blob = new Blob(Math.random() * realWidth, Math.random() * realHeight, generateId());
+    blob.bump(Math.round(Math.random() * 3));
     members.push(blob);
     resizeCanvas();
     registerEventListeners();
@@ -261,7 +266,7 @@ var everything = (function() {
   function registerEventListeners(){
     $('#canvas').on('mouseup', function(event){
       console.log('click / new blob created');
-      var blob = new Blob(event.offsetX, event.offsetY, Math.random() * 100000);
+      var blob = new Blob(event.offsetX, event.offsetY, generateId());
       members.push(blob);
     });
 
@@ -274,7 +279,7 @@ var everything = (function() {
       console.log('bump');
       members.forEach(function(member){
         console.log(member);
-        member.bump(Math.random() * 3);
+        member.bump(Math.round(Math.random() * 3));
       });
     });
   }
