@@ -9,7 +9,8 @@ var everything = (function() {
   var realWidth = canvas.width;
   var realHeight = canvas.height;
 
-  var _useBlobColors = false;
+  var useBlobColors = false;
+  var absorbMode = false;
 
   var members = [];
   function Vector(x, y) {
@@ -78,7 +79,10 @@ var everything = (function() {
       return; // they aren't colliding
     }
 
-    if (b1.size > b2.size && (2 * (b1.size + absorb) < realHeight) && (2 * (b1.size + absorb) < realWidth) ){
+    if ( absorbMode
+        && b1.size > b2.size
+        && (2 * (b1.size + absorb) < realHeight)
+        && (2 * (b1.size + absorb) < realWidth) ){
       b1.size += absorb / 3;
       b2.size = Math.max(0, b2.size - absorb);
       //console.log(b1.size + ':' + b2.size);
@@ -182,7 +186,7 @@ var everything = (function() {
       ctx.arc(this.pos.x, this.pos.y, this.size, 0, TWOPI, true);
       //ctx.fillStyle = this.color;
       var color = this.color;
-      if (!_useBlobColors){
+      if (!useBlobColors){
         var MAX = 10;
         var red = Math.floor(255 * Math.abs(this.v.y) / MAX);
         //console.log(red);
@@ -263,7 +267,7 @@ var everything = (function() {
 
     $('.title .whoa').on('mouseup', function(){
       console.log('toggle blob colors');
-      _useBlobColors = !_useBlobColors;
+      useBlobColors = !useBlobColors;
     });
 
     $('.title .bold').on('mouseup', function(){
