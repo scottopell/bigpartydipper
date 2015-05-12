@@ -141,7 +141,7 @@ module Game{
       //ctx.fillStyle = this.color;
       var color = this.color;
       if (!useBlobColors){
-        var MAX = 10;
+        var MAX = 3;
         var red = Math.floor(255 * Math.abs(this.v.y) / MAX);
         //console.log(red);
         var green = 255 - red;
