@@ -14,7 +14,11 @@ gulp.task('build', function() {
     .pipe(babel())
     .pipe(sourcemaps.write('.'))
     .pipe(gulp.dest('dist'));
-  });
+});
+
+gulp.task('watch', function () {
+  gulp.watch('src/**/*.ts', ['build']);
+});
 
 gulp.task('clean', function(){
   return del([

@@ -74,13 +74,13 @@ module Game{
   }
 
   class Blob {
-    id: string;
-    size: number;
-    color: string;
-    pos: Vector;
-    v: Vector;
-    canvas: HTMLCanvasElement;
-    ctx: CanvasRenderingContext2D;
+    id     : string;
+    size   : number;
+    color  : string;
+    pos    : Vector;
+    v      : Vector;
+    canvas : HTMLCanvasElement;
+    ctx    : CanvasRenderingContext2D;
 
     constructor (x: number, y: number, id: string, canvas: HTMLCanvasElement){
       this.id = id;
@@ -92,23 +92,11 @@ module Game{
       this.ctx = <CanvasRenderingContext2D> canvas.getContext('2d');
     }
 
-    bump = function(n){
-      this.v.y += Math.random() > 0.5 ? 1 : -1 * n;
-      this.v.x += Math.random() > 0.5 ? 1 : -1 * n;
+    bump = function(n: number){
+      this.v.y += Math.random() >= 0.5 ? 1 : -1 * n;
+      this.v.x += Math.random() >= 0.5 ? 1 : -1 * n;
     }
     move = function(){
-      for(var i = 0; i < members.length; i++){
-        if (members[i].id !== this.id){
-          if (collide(this, members[i])) {
-            this.v.reverse();
-            this.pos.add(this.v);
-            members[i].v.reverse();
-            members[i].pos.add(members[i].v);
-            resolveCollision(this, members[i]);
-          }
-        }
-      }
-
       this.pos.x += this.v.x;
       this.pos.y += this.v.y;
 
@@ -127,12 +115,23 @@ module Game{
       if (this.pos.y - this.size < 0)       // Top Wall
       {
         this.pos.y = this.size;   // Place ball against edge
-        this.v.y = -(this.v.y * RESTI);// Reverse direction and account for friction∂∂∂
+        this.v.y = -(this.v.y * RESTI);// Reverse direction and account for friction
       }
       else if (this.pos.y + this.size > realHeight) // Bottom Wall
       {
         this.pos.y = realHeight - this.size;   // Place ball against edge
         this.v.y = -(this.v.y * RESTI);// Reverse direction and account for friction
+      }
+    };
+    collisionCheck = function(){
+      for(var i = 0; i < members.length; i++){
+        if (members[i].id !== this.id){
+          if (roughCollisionCheck(this, members[i])){
+            if (collide(this, members[i])){
+              resolveCollision(this, members[i]);
+            }
+          }
+        }
       }
     };
     draw = function(ctx){
@@ -153,7 +152,7 @@ module Game{
     };
   }
 
-  function resolveCollision(b1, b2) {
+  function resolveCollision(b1: Blob, b2: Blob) {
 
     // get the mtd
     var delta = (b1.pos.subtract(b2.pos));
@@ -215,9 +214,15 @@ module Game{
     //console.log(impulse.length());
     b1.v = b1.v.add(impulse.multiply(im1));
     b2.v = b2.v.subtract(impulse.multiply(im2));
-
   }
 
+
+  function roughCollisionCheck(b1: Blob, b2: Blob){
+    return (b1.pos.x + b1.size + b2.size > b2.pos.x
+        && b1.pos.x < b2.pos.x + b1.size + b2.size
+        && b1.pos.y + b1.size + b2.size > b2.pos.y
+        && b1.pos.y < b2.pos.y + b1.size + b2.size)
+  }
 
   function collide(b1, b2){
     var distance = Math.sqrt(Math.pow(b2.pos.x - b1.pos.x, 2) + Math.pow(b2.pos.y - b1.pos.y, 2));
@@ -229,9 +234,13 @@ module Game{
     var ctx = <CanvasRenderingContext2D> canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (var i = 0; i < members.length; i++){
-      members[i].draw(ctx);
       members[i].move(ctx);
     }
+    for (var i = 0; i < members.length; i++){
+      members[i].collisionCheck(ctx);
+      members[i].draw(ctx);
+    }
+
     window.requestAnimationFrame(drawStuff);
   }
 
@@ -254,6 +263,8 @@ module Game{
 
   var scaleCanvas = function(){
     var scaleFactor = backingScale();
+    realWidth = canvas.width;
+    realHeight = canvas.height;
     if (scaleFactor > 1) {
       var oldWidth: number = canvas.width;
       var oldHeight: number = canvas.height;
@@ -262,10 +273,8 @@ module Game{
       // update the context for the new canvas scale
       var ctx: CanvasRenderingContext2D = <CanvasRenderingContext2D> canvas.getContext('2d');
       ctx.scale(scaleFactor, scaleFactor);
-      canvas.style.width = oldWidth + "px";
-      canvas.style.height = oldHeight + "px";
-      realHeight = oldHeight;
-      realWidth = oldWidth;
+      canvas.style.width = realWidth + "px";
+      canvas.style.height = realHeight + "px";
     }
   };
 
@@ -273,24 +282,27 @@ module Game{
     return "" + Math.floor(Math.random() * 1000000000);
   }
 
-  export function init(){
-    realWidth  = canvas.width;
-    realHeight = canvas.height;
-
-    window.addEventListener('resize', resizeCanvas, false);
-    var blob: Blob = new Blob(Math.random() * realWidth,
+  function addRandomBlob(){
+    let blob: Blob = new Blob(Math.random() * realWidth,
                               Math.random() * realHeight,
                               generateId(),
                               canvas);
     blob.bump(Math.round(Math.random() * 3));
     members.push(blob);
+  }
+
+  export function init(){
+    realWidth  = canvas.width;
+    realHeight = canvas.height;
+
+    window.addEventListener('resize', resizeCanvas, false);
+    addRandomBlob();
     resizeCanvas();
     registerEventListeners();
   }
 
   function registerEventListeners(){
     $('#canvas').on('mouseup', function(event){
-      console.log('click / new blob created');
       var blob: Blob = new Blob(event.offsetX,
                                 event.offsetY,
                                 generateId(),
@@ -303,12 +315,16 @@ module Game{
       useBlobColors = !useBlobColors;
     });
 
+    $('#gen10').on('click', function(){
+      for (let i = 0; i < 10; i++){ addRandomBlob(); }
+    });
+
+    $('#gen100').on('click', function(){
+      for (let i = 0; i < 100; i++){ addRandomBlob(); }
+    });
+
     $('.title .bold').on('mouseup', function(){
-      console.log('bump');
-      members.forEach(function(member){
-        console.log(member);
-        member.bump(Math.round(Math.random() * 3));
-      });
+      members.forEach( (member) => member.bump(Math.round(Math.random() * 3)))
     });
   }
 }

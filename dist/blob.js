@@ -1,4 +1,3 @@
-/// <reference path="jquery.d.ts" />
 'use strict';
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
@@ -74,21 +73,10 @@ var Game;
         _classCallCheck(this, Blob);
 
         this.bump = function (n) {
-            this.v.y += Math.random() > 0.5 ? 1 : -1 * n;
-            this.v.x += Math.random() > 0.5 ? 1 : -1 * n;
+            this.v.y += Math.random() >= 0.5 ? 1 : -1 * n;
+            this.v.x += Math.random() >= 0.5 ? 1 : -1 * n;
         };
         this.move = function () {
-            for (var i = 0; i < members.length; i++) {
-                if (members[i].id !== this.id) {
-                    if (collide(this, members[i])) {
-                        this.v.reverse();
-                        this.pos.add(this.v);
-                        members[i].v.reverse();
-                        members[i].pos.add(members[i].v);
-                        resolveCollision(this, members[i]);
-                    }
-                }
-            }
             this.pos.x += this.v.x;
             this.pos.y += this.v.y;
             if (this.pos.x - this.size < 0) {
@@ -104,6 +92,17 @@ var Game;
             } else if (this.pos.y + this.size > realHeight) {
                 this.pos.y = realHeight - this.size;
                 this.v.y = -(this.v.y * RESTI);
+            }
+        };
+        this.collisionCheck = function () {
+            for (var i = 0; i < members.length; i++) {
+                if (members[i].id !== this.id) {
+                    if (roughCollisionCheck(this, members[i])) {
+                        if (collide(this, members[i])) {
+                            resolveCollision(this, members[i]);
+                        }
+                    }
+                }
             }
         };
         this.draw = function (ctx) {
@@ -167,6 +166,9 @@ var Game;
         b1.v = b1.v.add(impulse.multiply(im1));
         b2.v = b2.v.subtract(impulse.multiply(im2));
     }
+    function roughCollisionCheck(b1, b2) {
+        return b1.pos.x + b1.size + b2.size > b2.pos.x && b1.pos.x < b2.pos.x + b1.size + b2.size && b1.pos.y + b1.size + b2.size > b2.pos.y && b1.pos.y < b2.pos.y + b1.size + b2.size;
+    }
     function collide(b1, b2) {
         var distance = Math.sqrt(Math.pow(b2.pos.x - b1.pos.x, 2) + Math.pow(b2.pos.y - b1.pos.y, 2));
         return distance < b1.size + b2.size;
@@ -175,8 +177,11 @@ var Game;
         var ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         for (var i = 0; i < members.length; i++) {
-            members[i].draw(ctx);
             members[i].move(ctx);
+        }
+        for (var i = 0; i < members.length; i++) {
+            members[i].collisionCheck(ctx);
+            members[i].draw(ctx);
         }
         window.requestAnimationFrame(drawStuff);
     }
@@ -196,6 +201,8 @@ var Game;
     };
     var scaleCanvas = function scaleCanvas() {
         var scaleFactor = backingScale();
+        realWidth = canvas.width;
+        realHeight = canvas.height;
         if (scaleFactor > 1) {
             var oldWidth = canvas.width;
             var oldHeight = canvas.height;
@@ -203,29 +210,29 @@ var Game;
             canvas.height = canvas.height * scaleFactor;
             var ctx = canvas.getContext('2d');
             ctx.scale(scaleFactor, scaleFactor);
-            canvas.style.width = oldWidth + "px";
-            canvas.style.height = oldHeight + "px";
-            realHeight = oldHeight;
-            realWidth = oldWidth;
+            canvas.style.width = realWidth + "px";
+            canvas.style.height = realHeight + "px";
         }
     };
     function generateId() {
         return "" + Math.floor(Math.random() * 1000000000);
     }
+    function addRandomBlob() {
+        var blob = new Blob(Math.random() * realWidth, Math.random() * realHeight, generateId(), canvas);
+        blob.bump(Math.round(Math.random() * 3));
+        members.push(blob);
+    }
     function init() {
         realWidth = canvas.width;
         realHeight = canvas.height;
         window.addEventListener('resize', resizeCanvas, false);
-        var blob = new Blob(Math.random() * realWidth, Math.random() * realHeight, generateId(), canvas);
-        blob.bump(Math.round(Math.random() * 3));
-        members.push(blob);
+        addRandomBlob();
         resizeCanvas();
         registerEventListeners();
     }
     Game.init = init;
     function registerEventListeners() {
         $('#canvas').on('mouseup', function (event) {
-            console.log('click / new blob created');
             var blob = new Blob(event.offsetX, event.offsetY, generateId(), canvas);
             members.push(blob);
         });
@@ -233,11 +240,19 @@ var Game;
             console.log('toggle blob colors');
             useBlobColors = !useBlobColors;
         });
+        $('#gen10').on('click', function () {
+            for (var i = 0; i < 10; i++) {
+                addRandomBlob();
+            }
+        });
+        $('#gen100').on('click', function () {
+            for (var i = 0; i < 100; i++) {
+                addRandomBlob();
+            }
+        });
         $('.title .bold').on('mouseup', function () {
-            console.log('bump');
             members.forEach(function (member) {
-                console.log(member);
-                member.bump(Math.round(Math.random() * 3));
+                return member.bump(Math.round(Math.random() * 3));
             });
         });
     }
