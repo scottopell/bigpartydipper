@@ -1,4 +1,3 @@
-/// <reference path="jquery.d.ts" />
 module Game {
   var realWidth: number;
   var realHeight: number;
