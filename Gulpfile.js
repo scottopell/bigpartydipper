@@ -7,7 +7,7 @@ var notify = require("gulp-notify");
 
 var tsProject = ts.createProject("./tsconfig.json");
 
-gulp.task("build", function() {
+function build() {
   return gulp
     .src(["src/**/*.ts"])
     .pipe(sourcemaps.init())
@@ -16,10 +16,11 @@ gulp.task("build", function() {
     .pipe(sourcemaps.write("."))
     .pipe(gulp.dest("dist"))
     .pipe(notify("Build Finished"));
-});
+}
+gulp.task("build", build);
 
 gulp.task("watch", function() {
-  gulp.watch("src/**/*.ts", ["build"]);
+  gulp.watch("src/**/*.ts", { ignoreInitial: false }, gulp.series(build));
 });
 
 gulp.task("clean", function() {

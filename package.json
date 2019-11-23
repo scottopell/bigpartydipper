@@ -5,7 +5,8 @@
   "main": "index.html",
   "author": "Scott Opell",
   "scripts": {
-    "build": "gulp build"
+    "build": "gulp build",
+    "watch": "gulp watch"
   },
   "devDependencies": {
     "@babel/core": "^7.7.4",
