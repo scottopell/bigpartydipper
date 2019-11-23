@@ -3,7 +3,6 @@ var Game;
 (function (Game) {
   var realWidth;
   var realHeight;
-  let fps;
   var absorb = 0.1;
   var RESTI = 0.4;
   var TWOPI = Math.PI * 2;
@@ -14,131 +13,76 @@ var Game;
 
   class Vector {
     constructor(x, y) {
-      this.subtract = function (vector) {
-        return new Vector(this.x - vector.x, this.y - vector.y);
-      };
-
-      this.add = function (vector) {
-        return new Vector(this.x + vector.x, this.y + vector.y);
-      };
-
-      this.multiply = function (val) {
-        return new Vector(this.x * val, this.y * val);
-      };
-
-      this.dot = function (v) {
-        return this.x * v.x + this.y * v.y;
-      };
-
-      this.vectorMultiply = function (v) {
-        return new Vector(this.x * v.x, this.y * v.y);
-      };
-
-      this.normalize = function () {
-        var l = this.length();
-        var nX, nY;
-
-        if (l !== 0) {
-          nX = this.x / l;
-          nY = this.y / l;
-        } else {
-          nX = 0;
-          nY = 0;
-        }
-
-        return new Vector(nX, nY);
-      };
-
-      this.reverseX = function () {
-        this.x *= -1;
-      };
-
-      this.reverseY = function () {
-        this.y *= -1;
-      };
-
-      this.reverse = function () {
-        this.reverseX();
-        this.reverseY();
-      };
-
-      this.length = function () {
-        return Math.sqrt(this.x * this.x + this.y * this.y);
-      };
-
-      this.distance = function (v) {
-        return Math.sqrt((v.x - this.x) * (v.x - this.x) + (v.y - this.y) * (v.y - this.y));
-      };
-
-      this.direction = function () {
-        var x = this.x / Math.abs(x);
-        var y = this.y / Math.abs(y);
-        return new Vector(x, y);
-      };
-
       this.x = x;
       this.y = y;
+    }
+
+    subtract(vector) {
+      return new Vector(this.x - vector.x, this.y - vector.y);
+    }
+
+    add(vector) {
+      return new Vector(this.x + vector.x, this.y + vector.y);
+    }
+
+    multiply(val) {
+      return new Vector(this.x * val, this.y * val);
+    }
+
+    dot(v) {
+      return this.x * v.x + this.y * v.y;
+    }
+
+    vectorMultiply(v) {
+      return new Vector(this.x * v.x, this.y * v.y);
+    }
+
+    normalize() {
+      var l = this.length();
+      var nX, nY;
+
+      if (l !== 0) {
+        nX = this.x / l;
+        nY = this.y / l;
+      } else {
+        nX = 0;
+        nY = 0;
+      }
+
+      return new Vector(nX, nY);
+    }
+
+    reverseX() {
+      this.x *= -1;
+    }
+
+    reverseY() {
+      this.y *= -1;
+    }
+
+    reverse() {
+      this.reverseX();
+      this.reverseY();
+    }
+
+    length() {
+      return Math.sqrt(this.x * this.x + this.y * this.y);
+    }
+
+    distance(v) {
+      return Math.sqrt((v.x - this.x) * (v.x - this.x) + (v.y - this.y) * (v.y - this.y));
+    }
+
+    direction() {
+      var x = this.x / Math.abs(this.x);
+      var y = this.y / Math.abs(this.y);
+      return new Vector(x, y);
     }
 
   }
 
   class Blob {
     constructor(x, y, id, canvas) {
-      this.bump = function (n) {
-        this.v.y += Math.random() >= 0.5 ? 1 : -1 * n;
-        this.v.x += Math.random() >= 0.5 ? 1 : -1 * n;
-      };
-
-      this.move = function () {
-        this.pos.x += this.v.x;
-        this.pos.y += this.v.y;
-
-        if (this.pos.x - this.size < 0) {
-          this.pos.x = this.size;
-          this.v.x = -(this.v.x * RESTI);
-        } else if (this.pos.x + this.size > realWidth) {
-          this.pos.x = realWidth - this.size;
-          this.v.x = -(this.v.x * RESTI);
-        }
-
-        if (this.pos.y - this.size < 0) {
-          this.pos.y = this.size;
-          this.v.y = -(this.v.y * RESTI);
-        } else if (this.pos.y + this.size > realHeight) {
-          this.pos.y = realHeight - this.size;
-          this.v.y = -(this.v.y * RESTI);
-        }
-      };
-
-      this.collisionCheck = function () {
-        for (var i = 0; i < members.length; i++) {
-          if (members[i].id !== this.id) {
-            if (roughCollisionCheck(this, members[i])) {
-              if (collide(this, members[i])) {
-                resolveCollision(this, members[i]);
-              }
-            }
-          }
-        }
-      };
-
-      this.draw = function (ctx) {
-        ctx.beginPath();
-        ctx.arc(this.pos.x, this.pos.y, this.size, 0, TWOPI, true);
-        var color = this.color;
-
-        if (!useBlobColors) {
-          var MAX = 3;
-          var red = Math.floor(255 * Math.abs(this.v.y) / MAX);
-          var green = 255 - red;
-          color = "rgb(" + red + "," + green + ",0)";
-        }
-
-        ctx.fillStyle = color;
-        ctx.closePath();
-        ctx.fill();
-      };
-
       this.id = id;
       this.size = Math.floor(Math.random() * 10) + 6;
       this.color = "#" + Math.floor(Math.random() * 16777215).toString(16);
@@ -146,6 +90,61 @@ var Game;
       this.v = new Vector(0, 0);
       this.canvas = canvas;
       this.ctx = canvas.getContext("2d");
+    }
+
+    bump(n) {
+      this.v.y += Math.random() >= 0.5 ? 1 : -1 * n;
+      this.v.x += Math.random() >= 0.5 ? 1 : -1 * n;
+    }
+
+    move() {
+      this.pos.x += this.v.x;
+      this.pos.y += this.v.y;
+
+      if (this.pos.x - this.size < 0) {
+        this.pos.x = this.size;
+        this.v.x = -(this.v.x * RESTI);
+      } else if (this.pos.x + this.size > realWidth) {
+        this.pos.x = realWidth - this.size;
+        this.v.x = -(this.v.x * RESTI);
+      }
+
+      if (this.pos.y - this.size < 0) {
+        this.pos.y = this.size;
+        this.v.y = -(this.v.y * RESTI);
+      } else if (this.pos.y + this.size > realHeight) {
+        this.pos.y = realHeight - this.size;
+        this.v.y = -(this.v.y * RESTI);
+      }
+    }
+
+    collisionCheck() {
+      for (var i = 0; i < members.length; i++) {
+        if (members[i].id !== this.id) {
+          if (roughCollisionCheck(this, members[i])) {
+            if (collide(this, members[i])) {
+              resolveCollision(this, members[i]);
+            }
+          }
+        }
+      }
+    }
+
+    draw(ctx) {
+      ctx.beginPath();
+      ctx.arc(this.pos.x, this.pos.y, this.size, 0, TWOPI, true);
+      var color = this.color;
+
+      if (!useBlobColors) {
+        var MAX = 3;
+        var red = Math.floor(255 * Math.abs(this.v.y) / MAX);
+        var green = 255 - red;
+        color = "rgb(" + red + "," + green + ",0)";
+      }
+
+      ctx.fillStyle = color;
+      ctx.closePath();
+      ctx.fill();
     }
 
   }
@@ -211,11 +210,11 @@ var Game;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     for (var i = 0; i < members.length; i++) {
-      members[i].move(ctx);
+      members[i].move();
     }
 
     for (var i = 0; i < members.length; i++) {
-      members[i].collisionCheck(ctx);
+      members[i].collisionCheck();
       members[i].draw(ctx);
     }
 
@@ -286,25 +285,30 @@ var Game;
   Game.init = init;
 
   function registerEventListeners() {
-    $("#canvas").on("mouseup", function (event) {
+    const canvas = document.getElementById("canvas");
+    canvas.addEventListener("mouseup", event => {
       let blob = new Blob(event.offsetX, event.offsetY, generateId(), canvas);
       insertBlob(blob);
     });
-    $(".title .whoa").on("mouseup", function () {
+    const woah = document.querySelector(".title .whoa");
+    woah.addEventListener("mouseup", function () {
       console.log("toggle blob colors");
       useBlobColors = !useBlobColors;
     });
-    $("#gen10").on("click", function () {
+    const genTen = document.getElementById("gen10");
+    genTen.addEventListener("click", function () {
       for (let i = 0; i < 10; i++) {
         addRandomBlob();
       }
     });
-    $("#gen100").on("click", function () {
+    const genOneHundred = document.getElementById("gen100");
+    genOneHundred.addEventListener("click", function () {
       for (let i = 0; i < 100; i++) {
         addRandomBlob();
       }
     });
-    $(".title .bold").on("mouseup", function () {
+    const boldTitle = document.getElementById("bigpartytitle");
+    boldTitle.addEventListener("click", function () {
       members.forEach(member => member.bump(Math.round(Math.random() * 3)));
     });
   }

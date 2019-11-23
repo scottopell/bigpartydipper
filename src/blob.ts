@@ -1,7 +1,6 @@
 module Game {
   var realWidth: number;
   var realHeight: number;
-  let fps: number;
 
   var absorb: number = 0.1;
   var RESTI: number = 0.4;
@@ -10,7 +9,7 @@ module Game {
   var useBlobColors: boolean = false;
   var absorbMode: boolean = false;
 
-  var members = [];
+  var members: Blob[] = [];
   var canvas = <HTMLCanvasElement>document.getElementById("canvas");
 
   class Vector {
@@ -21,22 +20,23 @@ module Game {
       this.x = x;
       this.y = y;
     }
-    subtract = function(vector: Vector) {
+
+    subtract(vector: Vector) {
       return new Vector(this.x - vector.x, this.y - vector.y);
-    };
-    add = function(vector: Vector) {
+    }
+    add(vector: Vector) {
       return new Vector(this.x + vector.x, this.y + vector.y);
-    };
-    multiply = function(val: number) {
+    }
+    multiply(val: number) {
       return new Vector(this.x * val, this.y * val);
-    };
-    dot = function(v: Vector) {
+    }
+    dot(v: Vector) {
       return this.x * v.x + this.y * v.y;
-    };
-    vectorMultiply = function(v: Vector) {
+    }
+    vectorMultiply(v: Vector) {
       return new Vector(this.x * v.x, this.y * v.y);
-    };
-    normalize = function() {
+    }
+    normalize() {
       var l = this.length();
       var nX, nY;
       if (l !== 0) {
@@ -48,31 +48,31 @@ module Game {
       }
 
       return new Vector(nX, nY);
-    };
+    }
 
-    reverseX = function() {
+    reverseX() {
       this.x *= -1;
-    };
-    reverseY = function() {
+    }
+    reverseY() {
       this.y *= -1;
-    };
-    reverse = function() {
+    }
+    reverse() {
       this.reverseX();
       this.reverseY();
-    };
-    length = function() {
+    }
+    length() {
       return Math.sqrt(this.x * this.x + this.y * this.y);
-    };
-    distance = function(v: Vector) {
+    }
+    distance(v: Vector) {
       return Math.sqrt(
         (v.x - this.x) * (v.x - this.x) + (v.y - this.y) * (v.y - this.y)
       );
-    };
-    direction = function() {
-      var x = this.x / Math.abs(x);
-      var y = this.y / Math.abs(y);
+    }
+    direction() {
+      var x = this.x / Math.abs(this.x);
+      var y = this.y / Math.abs(this.y);
       return new Vector(x, y);
-    };
+    }
   }
 
   class Blob {
@@ -94,11 +94,11 @@ module Game {
       this.ctx = <CanvasRenderingContext2D>canvas.getContext("2d");
     }
 
-    bump = function(n: number) {
+    bump(n: number) {
       this.v.y += Math.random() >= 0.5 ? 1 : -1 * n;
       this.v.x += Math.random() >= 0.5 ? 1 : -1 * n;
-    };
-    move = function() {
+    }
+    move() {
       this.pos.x += this.v.x;
       this.pos.y += this.v.y;
 
@@ -121,8 +121,8 @@ module Game {
         this.pos.y = realHeight - this.size; // Place ball against edge
         this.v.y = -(this.v.y * RESTI); // Reverse direction and account for friction
       }
-    };
-    collisionCheck = function() {
+    }
+    collisionCheck() {
       for (var i = 0; i < members.length; i++) {
         if (members[i].id !== this.id) {
           if (roughCollisionCheck(this, members[i])) {
@@ -132,8 +132,8 @@ module Game {
           }
         }
       }
-    };
-    draw = function(ctx) {
+    }
+    draw(ctx: CanvasRenderingContext2D) {
       ctx.beginPath();
       ctx.arc(this.pos.x, this.pos.y, this.size, 0, TWOPI, true);
       //ctx.fillStyle = this.color;
@@ -148,7 +148,7 @@ module Game {
       ctx.fillStyle = color;
       ctx.closePath();
       ctx.fill();
-    };
+    }
   }
 
   function resolveCollision(b1: Blob, b2: Blob) {
@@ -224,7 +224,7 @@ module Game {
     );
   }
 
-  function collide(b1, b2) {
+  function collide(b1: Blob, b2: Blob) {
     let distance = Math.sqrt(
       Math.pow(b2.pos.x - b1.pos.x, 2) + Math.pow(b2.pos.y - b1.pos.y, 2)
     );
@@ -235,10 +235,10 @@ module Game {
     var ctx = <CanvasRenderingContext2D>canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (var i = 0; i < members.length; i++) {
-      members[i].move(ctx);
+      members[i].move();
     }
     for (var i = 0; i < members.length; i++) {
-      members[i].collisionCheck(ctx);
+      members[i].collisionCheck();
       members[i].draw(ctx);
     }
 
@@ -315,7 +315,8 @@ module Game {
   }
 
   function registerEventListeners() {
-    $("#canvas").on("mouseup", function(event) {
+    const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+    canvas.addEventListener("mouseup", event => {
       let blob: Blob = new Blob(
         event.offsetX,
         event.offsetY,
@@ -325,24 +326,28 @@ module Game {
       insertBlob(blob);
     });
 
-    $(".title .whoa").on("mouseup", function() {
+    const woah = document.querySelector(".title .whoa") as HTMLSpanElement;
+    woah.addEventListener("mouseup", function() {
       console.log("toggle blob colors");
       useBlobColors = !useBlobColors;
     });
 
-    $("#gen10").on("click", function() {
+    const genTen = document.getElementById("gen10") as HTMLSpanElement;
+    genTen.addEventListener("click", function() {
       for (let i = 0; i < 10; i++) {
         addRandomBlob();
       }
     });
 
-    $("#gen100").on("click", function() {
+    const genOneHundred = document.getElementById("gen100") as HTMLSpanElement;
+    genOneHundred.addEventListener("click", function() {
       for (let i = 0; i < 100; i++) {
         addRandomBlob();
       }
     });
 
-    $(".title .bold").on("mouseup", function() {
+    const boldTitle = document.getElementById("bigpartytitle") as HTMLSpanElement;
+    boldTitle.addEventListener("click", function() {
       members.forEach(member => member.bump(Math.round(Math.random() * 3)));
     });
   }
