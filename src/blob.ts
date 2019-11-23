@@ -77,7 +77,7 @@ module Game {
 
   class Blob {
     id: string;
-    size: number;
+    radius: number;
     color: string;
     pos: Vector;
     v: Vector;
@@ -86,12 +86,14 @@ module Game {
 
     constructor(x: number, y: number, id: string, canvas: HTMLCanvasElement) {
       this.id = id;
-      this.size = Math.floor(Math.random() * 10) + 6;
+      this.radius = Math.floor(Math.random() * 10) + 1;
       this.color = "#" + Math.floor(Math.random() * 16777215).toString(16);
       this.pos = new Vector(x, y);
       this.v = new Vector(0, 0);
       this.canvas = canvas;
-      this.ctx = <CanvasRenderingContext2D>canvas.getContext("2d");
+      this.ctx = <CanvasRenderingContext2D>(
+        canvas.getContext("2d", { alpha: false })
+      );
     }
 
     bump(n: number) {
@@ -103,22 +105,22 @@ module Game {
       this.pos.y += this.v.y;
 
       // Check for collision with walls
-      if (this.pos.x - this.size < 0) {
-        this.pos.x = this.size; // Place ball against edge
+      if (this.pos.x - this.radius < 0) {
+        this.pos.x = this.radius; // Place ball against edge
         this.v.x = -(this.v.x * RESTI); // Reverse direction and account for friction
-      } else if (this.pos.x + this.size > realWidth) {
+      } else if (this.pos.x + this.radius > realWidth) {
         // Right Wall
-        this.pos.x = realWidth - this.size; // Place ball against edge
+        this.pos.x = realWidth - this.radius; // Place ball against edge
         this.v.x = -(this.v.x * RESTI); // Reverse direction and account for friction
       }
 
-      if (this.pos.y - this.size < 0) {
+      if (this.pos.y - this.radius < 0) {
         // Top Wall
-        this.pos.y = this.size; // Place ball against edge
+        this.pos.y = this.radius; // Place ball against edge
         this.v.y = -(this.v.y * RESTI); // Reverse direction and account for friction
-      } else if (this.pos.y + this.size > realHeight) {
+      } else if (this.pos.y + this.radius > realHeight) {
         // Bottom Wall
-        this.pos.y = realHeight - this.size; // Place ball against edge
+        this.pos.y = realHeight - this.radius; // Place ball against edge
         this.v.y = -(this.v.y * RESTI); // Reverse direction and account for friction
       }
     }
@@ -133,28 +135,24 @@ module Game {
         }
       }
     }
-    draw(ctx: CanvasRenderingContext2D) {
-      ctx.beginPath();
-      ctx.arc(this.pos.x, this.pos.y, this.size, 0, TWOPI, true);
-      //ctx.fillStyle = this.color;
-      var color = this.color;
+
+    getColor(): string {
+      let color = this.color;
       if (!useBlobColors) {
         var MAX = 3;
         var red = Math.floor((255 * Math.abs(this.v.y)) / MAX);
         //console.log(red);
         var green = 255 - red;
-        color = "rgb(" + red + "," + green + ",0)";
+        color = `rgb(${red}, ${green},0)`;
       }
-      ctx.fillStyle = color;
-      ctx.closePath();
-      ctx.fill();
+      return color;
     }
   }
 
   function resolveCollision(b1: Blob, b2: Blob) {
     // get the mtd
     var delta = b1.pos.subtract(b2.pos);
-    var r = b1.size + b2.size;
+    var r = b1.radius + b2.radius;
     var dist2 = delta.dot(delta);
     var mtd;
 
@@ -164,14 +162,14 @@ module Game {
 
     if (
       absorbMode &&
-      b1.size > b2.size &&
-      2 * (b1.size + absorb) < realHeight &&
-      2 * (b1.size + absorb) < realWidth
+      b1.radius > b2.radius &&
+      2 * (b1.radius + absorb) < realHeight &&
+      2 * (b1.radius + absorb) < realWidth
     ) {
-      b1.size += absorb / 3;
-      b2.size = Math.max(0, b2.size - absorb);
+      b1.radius += absorb / 3;
+      b2.radius = Math.max(0, b2.radius - absorb);
       //console.log(b1.size + ':' + b2.size);
-      if (b2.size === 0) {
+      if (b2.radius === 0) {
         members.splice(members.indexOf(b2), 1);
       }
     }
@@ -180,17 +178,17 @@ module Game {
     //console.log(d);
     if (d !== 0.0) {
       // minimum translation distance to push balls apart after intersecting
-      mtd = delta.multiply((b1.size + b2.size - d) / d);
+      mtd = delta.multiply((b1.radius + b2.radius - d) / d);
     } else {
       // Special case. Balls are exactly on top of eachother.
       // Don't want to divide by zero.
-      d = b1.size + b2.size - 1.0;
-      delta = new Vector(b1.size + b2.size, 0.0);
-      mtd = delta.multiply((b1.size + b2.size - d) / d);
+      d = b1.radius + b2.radius - 1.0;
+      delta = new Vector(b1.radius + b2.radius, 0.0);
+      mtd = delta.multiply((b1.radius + b2.radius - d) / d);
     }
     // resolve intersection
-    var im1 = 1 / b1.size; // inverse mass quantities
-    var im2 = 1 / b2.size;
+    var im1 = 1 / b1.radius; // inverse mass quantities
+    var im2 = 1 / b2.radius;
     //console.log(mtd.length());
     // push-pull them apart
 
@@ -217,10 +215,10 @@ module Game {
 
   function roughCollisionCheck(b1: Blob, b2: Blob) {
     return (
-      b1.pos.x + b1.size + b2.size > b2.pos.x &&
-      b1.pos.x < b2.pos.x + b1.size + b2.size &&
-      b1.pos.y + b1.size + b2.size > b2.pos.y &&
-      b1.pos.y < b2.pos.y + b1.size + b2.size
+      b1.pos.x + b1.radius + b2.radius > b2.pos.x &&
+      b1.pos.x < b2.pos.x + b1.radius + b2.radius &&
+      b1.pos.y + b1.radius + b2.radius > b2.pos.y &&
+      b1.pos.y < b2.pos.y + b1.radius + b2.radius
     );
   }
 
@@ -228,21 +226,24 @@ module Game {
     let distance = Math.sqrt(
       Math.pow(b2.pos.x - b1.pos.x, 2) + Math.pow(b2.pos.y - b1.pos.y, 2)
     );
-    return distance < b1.size + b2.size;
+    return distance < b1.radius + b2.radius;
   }
 
-  function drawStuff() {
-    var ctx = <CanvasRenderingContext2D>canvas.getContext("2d");
+  function drawStuff(ctx: CanvasRenderingContext2D) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    for (var i = 0; i < members.length; i++) {
-      members[i].move();
+    for (const member of members) {
+      member.move();
+      member.collisionCheck();
     }
-    for (var i = 0; i < members.length; i++) {
-      members[i].collisionCheck();
-      members[i].draw(ctx);
+    for (const member of members) {
+      ctx.beginPath();
+      ctx.fillStyle = member.getColor();
+      ctx.moveTo(member.pos.x, member.pos.y);
+      ctx.arc(member.pos.x, member.pos.y, member.radius, 0, TWOPI);
+      ctx.fill();
     }
 
-    window.requestAnimationFrame(drawStuff);
+    window.requestAnimationFrame(drawStuff.bind(null, ctx));
   }
 
   function resizeCanvas() {
@@ -250,7 +251,11 @@ module Game {
     canvas.height = window.innerHeight * 0.8;
 
     scaleCanvas();
-    drawStuff();
+    var ctx: CanvasRenderingContext2D = <CanvasRenderingContext2D>(
+      canvas.getContext("2d", { alpha: false })
+    );
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawStuff(ctx);
   }
 
   var backingScale = function() {
@@ -273,7 +278,7 @@ module Game {
       canvas.height = canvas.height * scaleFactor;
       // update the context for the new canvas scale
       var ctx: CanvasRenderingContext2D = <CanvasRenderingContext2D>(
-        canvas.getContext("2d")
+        canvas.getContext("2d", { alpha: false })
       );
       ctx.scale(scaleFactor, scaleFactor);
       canvas.style.width = realWidth + "px";
@@ -285,14 +290,16 @@ module Game {
     return "" + Math.floor(Math.random() * 1000000000);
   }
 
-  function addRandomBlob() {
+  function addRandomBlob(bump = true) {
     let blob: Blob = new Blob(
       Math.random() * realWidth,
       Math.random() * realHeight,
       generateId(),
       canvas
     );
-    blob.bump(Math.round(Math.random() * 3));
+    if (bump) {
+      blob.bump(Math.round(Math.random() * 3));
+    }
     insertBlob(blob);
   }
 
@@ -309,7 +316,7 @@ module Game {
     realHeight = canvas.height;
 
     window.addEventListener("resize", resizeCanvas, false);
-    addRandomBlob();
+    addRandomBlob(false);
     resizeCanvas();
     registerEventListeners();
   }
@@ -346,7 +353,9 @@ module Game {
       }
     });
 
-    const boldTitle = document.getElementById("bigpartytitle") as HTMLSpanElement;
+    const boldTitle = document.getElementById(
+      "bigpartytitle"
+    ) as HTMLSpanElement;
     boldTitle.addEventListener("click", function() {
       members.forEach(member => member.bump(Math.round(Math.random() * 3)));
     });

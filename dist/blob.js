@@ -84,12 +84,14 @@ var Game;
   class Blob {
     constructor(x, y, id, canvas) {
       this.id = id;
-      this.size = Math.floor(Math.random() * 10) + 6;
+      this.radius = Math.floor(Math.random() * 10) + 1;
       this.color = "#" + Math.floor(Math.random() * 16777215).toString(16);
       this.pos = new Vector(x, y);
       this.v = new Vector(0, 0);
       this.canvas = canvas;
-      this.ctx = canvas.getContext("2d");
+      this.ctx = canvas.getContext("2d", {
+        alpha: false
+      });
     }
 
     bump(n) {
@@ -101,19 +103,19 @@ var Game;
       this.pos.x += this.v.x;
       this.pos.y += this.v.y;
 
-      if (this.pos.x - this.size < 0) {
-        this.pos.x = this.size;
+      if (this.pos.x - this.radius < 0) {
+        this.pos.x = this.radius;
         this.v.x = -(this.v.x * RESTI);
-      } else if (this.pos.x + this.size > realWidth) {
-        this.pos.x = realWidth - this.size;
+      } else if (this.pos.x + this.radius > realWidth) {
+        this.pos.x = realWidth - this.radius;
         this.v.x = -(this.v.x * RESTI);
       }
 
-      if (this.pos.y - this.size < 0) {
-        this.pos.y = this.size;
+      if (this.pos.y - this.radius < 0) {
+        this.pos.y = this.radius;
         this.v.y = -(this.v.y * RESTI);
-      } else if (this.pos.y + this.size > realHeight) {
-        this.pos.y = realHeight - this.size;
+      } else if (this.pos.y + this.radius > realHeight) {
+        this.pos.y = realHeight - this.radius;
         this.v.y = -(this.v.y * RESTI);
       }
     }
@@ -130,28 +132,24 @@ var Game;
       }
     }
 
-    draw(ctx) {
-      ctx.beginPath();
-      ctx.arc(this.pos.x, this.pos.y, this.size, 0, TWOPI, true);
-      var color = this.color;
+    getColor() {
+      let color = this.color;
 
       if (!useBlobColors) {
         var MAX = 3;
         var red = Math.floor(255 * Math.abs(this.v.y) / MAX);
         var green = 255 - red;
-        color = "rgb(" + red + "," + green + ",0)";
+        color = `rgb(${red}, ${green},0)`;
       }
 
-      ctx.fillStyle = color;
-      ctx.closePath();
-      ctx.fill();
+      return color;
     }
 
   }
 
   function resolveCollision(b1, b2) {
     var delta = b1.pos.subtract(b2.pos);
-    var r = b1.size + b2.size;
+    var r = b1.radius + b2.radius;
     var dist2 = delta.dot(delta);
     var mtd;
 
@@ -159,11 +157,11 @@ var Game;
       return;
     }
 
-    if (absorbMode && b1.size > b2.size && 2 * (b1.size + absorb) < realHeight && 2 * (b1.size + absorb) < realWidth) {
-      b1.size += absorb / 3;
-      b2.size = Math.max(0, b2.size - absorb);
+    if (absorbMode && b1.radius > b2.radius && 2 * (b1.radius + absorb) < realHeight && 2 * (b1.radius + absorb) < realWidth) {
+      b1.radius += absorb / 3;
+      b2.radius = Math.max(0, b2.radius - absorb);
 
-      if (b2.size === 0) {
+      if (b2.radius === 0) {
         members.splice(members.indexOf(b2), 1);
       }
     }
@@ -171,15 +169,15 @@ var Game;
     var d = delta.length();
 
     if (d !== 0.0) {
-      mtd = delta.multiply((b1.size + b2.size - d) / d);
+      mtd = delta.multiply((b1.radius + b2.radius - d) / d);
     } else {
-      d = b1.size + b2.size - 1.0;
-      delta = new Vector(b1.size + b2.size, 0.0);
-      mtd = delta.multiply((b1.size + b2.size - d) / d);
+      d = b1.radius + b2.radius - 1.0;
+      delta = new Vector(b1.radius + b2.radius, 0.0);
+      mtd = delta.multiply((b1.radius + b2.radius - d) / d);
     }
 
-    var im1 = 1 / b1.size;
-    var im2 = 1 / b2.size;
+    var im1 = 1 / b1.radius;
+    var im2 = 1 / b2.radius;
     b1.pos = b1.pos.add(mtd.multiply(im1 / (im1 + im2)));
     b2.pos = b2.pos.subtract(mtd.multiply(im2 / (im1 + im2)));
     var v = b1.v.subtract(b2.v);
@@ -197,35 +195,42 @@ var Game;
   }
 
   function roughCollisionCheck(b1, b2) {
-    return b1.pos.x + b1.size + b2.size > b2.pos.x && b1.pos.x < b2.pos.x + b1.size + b2.size && b1.pos.y + b1.size + b2.size > b2.pos.y && b1.pos.y < b2.pos.y + b1.size + b2.size;
+    return b1.pos.x + b1.radius + b2.radius > b2.pos.x && b1.pos.x < b2.pos.x + b1.radius + b2.radius && b1.pos.y + b1.radius + b2.radius > b2.pos.y && b1.pos.y < b2.pos.y + b1.radius + b2.radius;
   }
 
   function collide(b1, b2) {
     let distance = Math.sqrt(Math.pow(b2.pos.x - b1.pos.x, 2) + Math.pow(b2.pos.y - b1.pos.y, 2));
-    return distance < b1.size + b2.size;
+    return distance < b1.radius + b2.radius;
   }
 
-  function drawStuff() {
-    var ctx = canvas.getContext("2d");
+  function drawStuff(ctx) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    for (var i = 0; i < members.length; i++) {
-      members[i].move();
+    for (const member of members) {
+      member.move();
+      member.collisionCheck();
     }
 
-    for (var i = 0; i < members.length; i++) {
-      members[i].collisionCheck();
-      members[i].draw(ctx);
+    for (const member of members) {
+      ctx.beginPath();
+      ctx.fillStyle = member.getColor();
+      ctx.moveTo(member.pos.x, member.pos.y);
+      ctx.arc(member.pos.x, member.pos.y, member.radius, 0, TWOPI);
+      ctx.fill();
     }
 
-    window.requestAnimationFrame(drawStuff);
+    window.requestAnimationFrame(drawStuff.bind(null, ctx));
   }
 
   function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight * 0.8;
     scaleCanvas();
-    drawStuff();
+    var ctx = canvas.getContext("2d", {
+      alpha: false
+    });
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawStuff(ctx);
   }
 
   var backingScale = function () {
@@ -248,7 +253,9 @@ var Game;
       var oldHeight = canvas.height;
       canvas.width = canvas.width * scaleFactor;
       canvas.height = canvas.height * scaleFactor;
-      var ctx = canvas.getContext("2d");
+      var ctx = canvas.getContext("2d", {
+        alpha: false
+      });
       ctx.scale(scaleFactor, scaleFactor);
       canvas.style.width = realWidth + "px";
       canvas.style.height = realHeight + "px";
@@ -259,9 +266,13 @@ var Game;
     return "" + Math.floor(Math.random() * 1000000000);
   }
 
-  function addRandomBlob() {
+  function addRandomBlob(bump = true) {
     let blob = new Blob(Math.random() * realWidth, Math.random() * realHeight, generateId(), canvas);
-    blob.bump(Math.round(Math.random() * 3));
+
+    if (bump) {
+      blob.bump(Math.round(Math.random() * 3));
+    }
+
     insertBlob(blob);
   }
 
@@ -277,7 +288,7 @@ var Game;
     realWidth = canvas.width;
     realHeight = canvas.height;
     window.addEventListener("resize", resizeCanvas, false);
-    addRandomBlob();
+    addRandomBlob(false);
     resizeCanvas();
     registerEventListeners();
   }
