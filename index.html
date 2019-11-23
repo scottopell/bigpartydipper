@@ -1,33 +1,40 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset='utf-8'>
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="viewport" content="width=device-width">
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="viewport" content="width=device-width" />
 
-    <link rel="stylesheet" href="stylesheets/core.css" media="screen">
-    <link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>
-
+    <link rel="stylesheet" href="stylesheets/core.css" media="screen" />
+    <link
+      href="http://fonts.googleapis.com/css?family=Montserrat:400,700"
+      rel="stylesheet"
+      type="text/css"
+    />
 
     <title>BigPartyDipper.Party</title>
   </head>
 
   <body>
-    <div class='main'>
-      <div class='title noselect'>
-        <span class='bold'>BigPartyDipper</span>.<span class='whoa'>party</span>
-        <iframe src="https://ghbtns.com/github-btn.html?user=scottopell&repo=bigpartydipper&type=star&count=true" frameborder="0" scrolling="0" width="170px" height="20px"></iframe>
-        <span id='gen10'>Gen10</span>&nbsp;&nbsp;<span id='gen100'>gen100</span>
+    <div class="main">
+      <div class="title noselect">
+        <span class="bold">BigPartyDipper</span>.<span class="whoa">party</span>
+        <iframe
+          src="https://ghbtns.com/github-btn.html?user=scottopell&repo=bigpartydipper&type=star&count=true"
+          frameborder="0"
+          scrolling="0"
+          width="170px"
+          height="20px"
+        ></iframe>
+        <span id="gen10">Gen10</span>&nbsp;&nbsp;<span id="gen100">gen100</span>
       </div>
-      <canvas id='canvas'></canvas>
+      <canvas id="canvas"></canvas>
     </div>
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-    <script src="https://rawgit.com/mourner/rbush/master/rbush.js"></script>
     <script src="dist/blob.js"></script>
     <script>
-    $(function(){
-      Game.init();
-    });
+      document.addEventListener("DOMContentLoaded", function(event) {
+        Game.init();
+      });
     </script>
   </body>
 </html>
